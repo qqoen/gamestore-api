@@ -1,0 +1,20 @@
+{
+  "name": "gamestore-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/app.js",
+  "scripts": {
+    "server": "npx nodemon src/app.js",
+    "db": "node src/db.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongodb": "^3.6.2",
+    "nodemon": "^2.0.4"
+  }
+}
