@@ -8,7 +8,22 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
     const gamesColl = getCollection('games');
-    const games = await gamesColl.find();
+
+    const search = {
+        price: {
+            $gte: parseInt(req.query.priceFrom),
+            $lte: parseInt(req.query.priceTo)
+        }
+    };
+
+    if (req.query.categories != null && req.query.categories !== '') {
+        search.categories = {
+            $all: JSON.parse(req.query.categories)
+        };
+    }
+
+    const games = await gamesColl.find(search);
+
     const arr = await games.toArray();
 
     res.json(arr);
@@ -16,7 +31,6 @@ router.get('/', async (req, res) => {
 
 router.post('/', async (req, res) => {
     const games = getCollection('games');
-    console.log(req.body);
 
     await games.insertOne(new Game(req.body.title, req.body.price, req.body.categories));
 

@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 
 const { client } = require('./db');
 const games = require('./routes/games');
+const categories = require('./routes/categories');
+const orders = require('./routes/orders');
 
 dotenv.config();
 
@@ -21,14 +23,15 @@ app.use((req, res, next) => {
     const reqToken = authHeader && authHeader.split(' ')[1]
 
     if (reqToken == null) {
-        return res.sendStatus(401);
+        res.sendStatus(401);
+        return;
     }
 
     jwt.verify(reqToken, process.env.SECRET, (err) => {
-        console.error(err)
-
-        if (err) {
-            return res.sendStatus(401);
+        if (err != null) {
+            console.error(err)
+            res.sendStatus(401);
+            return;
         }
 
         next();
@@ -41,6 +44,8 @@ app.use((req, res, next) => {
 });
 
 app.use('/games', games);
+app.use('/categories', categories);
+app.use('/orders', orders);
 
 app.post('/login', (req, res) => {
     const login = req.body.login;
