@@ -2,7 +2,7 @@ const dotenv = require('dotenv');
 const express = require('express');
 const jwt = require('jsonwebtoken');
 
-const { client } = require('./db');
+const { client, getCollection } = require('./db');
 const games = require('./routes/games');
 const categories = require('./routes/categories');
 const orders = require('./routes/orders');
@@ -47,17 +47,26 @@ app.use('/games', games);
 app.use('/categories', categories);
 app.use('/orders', orders);
 
-app.post('/login', (req, res) => {
-    const login = req.body.login;
+app.post('/login', async (req, res) => {
+    const { login, password } = req.body;
 
-    if (login !== 'admin') {
+    const items = getCollection('users');
+    const item = await items.findOne({ login, password });
+
+    if (item != null) {
+        const token = jwt.sign({ login }, process.env.SECRET);
+        res.json(token);
+    } else {
         res.sendStatus(401);
-        return;
     }
+});
 
-    const token = jwt.sign({ login }, process.env.SECRET);
+app.post('/register', async (req, res) => {
+    const items = getCollection('users');
 
-    res.json(token);
+    await items.insertOne(new User(req.body.login, req.body.password, req.body.fullname));
+
+    res.sendStatus(200);
 });
 
 console.log('Connecting to db...');

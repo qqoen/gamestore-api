@@ -3,27 +3,32 @@ const { ObjectID } = require('mongodb');
 
 const { getCollection } = require('../db');
 const { Game } = require('../models');
+const { isEmpty } = require('../utils');
 
 const router = express.Router();
 
 router.get('/', async (req, res) => {
     const gamesColl = getCollection('games');
+    const { priceFrom, priceTo, categories } = req.query;
+    const search = {};
 
-    const search = {
-        price: {
-            $gte: parseInt(req.query.priceFrom),
-            $lte: parseInt(req.query.priceTo)
+    if (!isEmpty(priceFrom) || !isEmpty(priceTo)) {
+        search.price = {};
+
+        if (!isEmpty(priceFrom)) {
+            search.price.$gte = parseInt(priceFrom);
+        } else {
+            search.price.$lte = parseInt(priceTo);
         }
-    };
+    }
 
-    if (req.query.categories != null && req.query.categories !== '') {
+    if (!isEmpty(categories)) {
         search.categories = {
-            $all: JSON.parse(req.query.categories)
+            $all: JSON.parse(categories)
         };
     }
 
     const games = await gamesColl.find(search);
-
     const arr = await games.toArray();
 
     res.json(arr);
@@ -49,7 +54,9 @@ router.put('/:id', async (req, res) => {
     const games = getCollection('games');
     const _id = ObjectID(req.params.id);
 
-    await games.updateOne({ _id }, new Game(req.body.title, req.body.price, req.body.categories));
+    await games.updateOne({ _id }, {
+        $set: new Game(req.body.title, req.body.price, req.body.categories)
+    });
 
     res.sendStatus(200);
 });

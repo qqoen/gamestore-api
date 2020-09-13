@@ -34,7 +34,9 @@ router.put('/:id', async (req, res) => {
     const items = getCollection('categories');
     const _id = ObjectID(req.params.id);
 
-    await items.updateOne({ _id }, new Category(req.body.name));
+    await items.updateOne({ _id }, {
+        $set: new Category(req.body.name)
+    });
 
     res.sendStatus(200);
 });

@@ -34,7 +34,9 @@ router.put('/:id', async (req, res) => {
     const items = getCollection('orders');
     const _id = ObjectID(req.params.id);
 
-    await items.updateOne({ _id }, new Order(req.body.products, req.body.userId));
+    await items.updateOne({ _id }, {
+        $set: new Order(req.body.products, req.body.userId)
+    });
 
     res.sendStatus(200);
 });
