@@ -8,8 +8,8 @@ function Category(name) {
     this.name = name;
 }
 
-function Order(products, userId) {
-    this.products = products;
+function Order(games, userId) {
+    this.games = games;
     this.userId = userId;
 }
 

@@ -16,14 +16,14 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-    if (isEmpty(req.body.products) || isEmpty(req.body.userId)) {
+    if (isEmpty(req.body.games) || isEmpty(req.body.userId)) {
         req.sendStatus(400);
         return;
     }
 
     const items = getCollection('orders');
 
-    await items.insertOne(new Order(req.body.products, req.body.userId));
+    await items.insertOne(new Order(req.body.games, req.body.userId));
 
     res.sendStatus(200);
 });
@@ -31,23 +31,30 @@ router.post('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
     const orders = getCollection('orders');
     const users = getCollection('users');
-    const products = getCollection('products');
+    const games = getCollection('games');
 
     const orderId = ObjectID(req.params.id);
     const order = await orders.findOne({ _id: orderId });
     const userId = ObjectID(order.userId);
     const user = await users.findOne({ _id: userId });
+    const orderGames = await games.find({
+        _id: {
+            $in: order.games.map((id) => ObjectID(id))
+        }
+    });
+
+    const gamesArr = await orderGames.toArray();
+    const sum = gamesArr.reduce((acc, cur) => acc + cur.price, 0);
 
     res.json({
         ...order,
         userName: user.fullname,
-        // TODO: aggregate sum from products
-        sum: 0
+        sum
     });
 });
 
 router.put('/:id', async (req, res) => {
-    if (isEmpty(req.body.products) || isEmpty(req.body.userId)) {
+    if (isEmpty(req.body.games) || isEmpty(req.body.userId)) {
         req.sendStatus(400);
         return;
     }
@@ -56,7 +63,7 @@ router.put('/:id', async (req, res) => {
     const _id = ObjectID(req.params.id);
 
     await items.updateOne({ _id }, {
-        $set: new Order(req.body.products, req.body.userId)
+        $set: new Order(req.body.games, req.body.userId)
     });
 
     res.sendStatus(200);
