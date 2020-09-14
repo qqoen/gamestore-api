@@ -41,6 +41,7 @@ router.get('/:id', async (req, res) => {
     res.json({
         ...order,
         userName: user.fullname,
+        // TODO: aggregate sum from products
         sum: 0
     });
 });
