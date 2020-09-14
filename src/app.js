@@ -3,6 +3,8 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 
 const { client, getCollection } = require('./db');
+const { User } = require('./models');
+const { isEmpty } = require('./utils');
 const games = require('./routes/games');
 const categories = require('./routes/categories');
 const orders = require('./routes/orders');
@@ -13,8 +15,11 @@ const app = express();
 
 app.use(express.json());
 
+// Authorization check
 app.use((req, res, next) => {
-    if (req.path === '/login') {
+    const noAuthPaths = ['/login', '/register'];
+
+    if (noAuthPaths.includes(req.path)) {
         next();
         return;
     }
@@ -38,6 +43,7 @@ app.use((req, res, next) => {
     });
 });
 
+// Logging
 app.use((req, res, next) => {
     console.log(req.method, req.path);
     next();
@@ -62,11 +68,24 @@ app.post('/login', async (req, res) => {
 });
 
 app.post('/register', async (req, res) => {
+    if (isEmpty(req.body.login) || isEmpty(req.body.password) || isEmpty(req.body.fullname)) {
+        res.sendStatus(400);
+        return;
+    }
+
     const items = getCollection('users');
 
     await items.insertOne(new User(req.body.login, req.body.password, req.body.fullname));
 
     res.sendStatus(200);
+});
+
+app.get('/users', async (req, res) => {
+    const coll = getCollection('users');
+    const items = await coll.find();
+    const arr = await items.toArray();
+
+    res.json(arr);
 });
 
 console.log('Connecting to db...');

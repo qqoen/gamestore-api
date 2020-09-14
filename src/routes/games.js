@@ -35,6 +35,11 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
+    if (isEmpty(req.body.title) || isEmpty(req.body.price) || isEmpty(req.body.categories)) {
+        req.sendStatus(400);
+        return;
+    }
+
     const games = getCollection('games');
 
     await games.insertOne(new Game(req.body.title, req.body.price, req.body.categories));
@@ -51,6 +56,11 @@ router.get('/:id', async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
+    if (isEmpty(req.body.title) || isEmpty(req.body.price) || isEmpty(req.body.categories)) {
+        req.sendStatus(400);
+        return;
+    }
+
     const games = getCollection('games');
     const _id = ObjectID(req.params.id);
 
@@ -63,10 +73,14 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
     const games = getCollection('games');
-    const _id = ObjectID(req.params.id);
-    await games.deleteOne({ _id });
 
-    res.sendStatus(200);
+    try {
+        const _id = ObjectID(req.params.id);
+        await games.deleteOne({ _id });
+        res.sendStatus(200);
+    } catch (e) {
+        res.sendStatus(400);
+    }
 });
 
 module.exports = router;

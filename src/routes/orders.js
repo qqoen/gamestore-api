@@ -3,6 +3,7 @@ const { ObjectID } = require('mongodb');
 
 const { getCollection } = require('../db');
 const { Order } = require('../models');
+const { isEmpty } = require('../utils');
 
 const router = express.Router();
 
@@ -15,6 +16,11 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
+    if (isEmpty(req.body.products) || isEmpty(req.body.userId)) {
+        req.sendStatus(400);
+        return;
+    }
+
     const items = getCollection('orders');
 
     await items.insertOne(new Order(req.body.products, req.body.userId));
@@ -23,14 +29,28 @@ router.post('/', async (req, res) => {
 });
 
 router.get('/:id', async (req, res) => {
-    const items = getCollection('orders');
-    const _id = ObjectID(req.params.id);
-    const item = await items.findOne({ _id });
+    const orders = getCollection('orders');
+    const users = getCollection('users');
+    const products = getCollection('products');
 
-    res.json(item);
+    const orderId = ObjectID(req.params.id);
+    const order = await orders.findOne({ _id: orderId });
+    const userId = ObjectID(order.userId);
+    const user = await users.findOne({ _id: userId });
+
+    res.json({
+        ...order,
+        userName: user.fullname,
+        sum: 0
+    });
 });
 
 router.put('/:id', async (req, res) => {
+    if (isEmpty(req.body.products) || isEmpty(req.body.userId)) {
+        req.sendStatus(400);
+        return;
+    }
+
     const items = getCollection('orders');
     const _id = ObjectID(req.params.id);
 
@@ -43,10 +63,14 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
     const items = getCollection('orders');
-    const _id = ObjectID(req.params.id);
-    await items.deleteOne({ _id });
 
-    res.sendStatus(200);
+    try {
+        const _id = ObjectID(req.params.id);
+        await items.deleteOne({ _id });
+        res.sendStatus(200);
+    } catch (e) {
+        res.sendStatus(400);
+    }
 });
 
 module.exports = router;
